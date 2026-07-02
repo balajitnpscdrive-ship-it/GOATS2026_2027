@@ -387,23 +387,32 @@
         <button id="tab-team" class="tab-btn active" onclick="switchMode('team')">👥 TEAM ACTIVITY</button>
         <button id="tab-indiv" class="tab-btn" onclick="switchMode('indiv')">👤 INDV. ACTIVITY</button>
       </div>
-      
-      <!-- MEDAL TIER SELECTOR -->
-      <div class="medal-section" id="medal-section">
-        <div class="medal-section-label">🏅 SELECT POINT TIER</div>
-        <div class="medal-row">
-          <button class="medal-btn medal-2nd" id="medal-2" onclick="selectTier('2nd')"><span class="medal-icon">🥈</span><span class="medal-pts" id="medal-2-pts">+10</span></button>
-          <button class="medal-btn medal-1st selected" id="medal-1" onclick="selectTier('1st')"><span class="medal-icon">🥇</span><span class="medal-pts" id="medal-1-pts">+15</span></button>
-          <button class="medal-btn medal-3rd" id="medal-3" onclick="selectTier('3rd')"><span class="medal-icon">🥉</span><span class="medal-pts" id="medal-3-pts">+5</span></button>
+
+      <!-- TEAM MODE ONLY: MEDAL TIER SELECTOR & TIER INDICATOR & HOUSE GRID -->
+      <div id="team-mode-sections">
+        <div class="medal-section" id="medal-section">
+          <div class="medal-section-label">🏅 SELECT POINT TIER</div>
+          <div class="medal-row">
+            <button class="medal-btn medal-2nd" id="medal-2" onclick="selectTier('2nd')"><span class="medal-icon">🥈</span><span class="medal-pts" id="medal-2-pts">+10</span></button>
+            <button class="medal-btn medal-1st selected" id="medal-1" onclick="selectTier('1st')"><span class="medal-icon">🥇</span><span class="medal-pts" id="medal-1-pts">+15</span></button>
+            <button class="medal-btn medal-3rd" id="medal-3" onclick="selectTier('3rd')"><span class="medal-icon">🥉</span><span class="medal-pts" id="medal-3-pts">+5</span></button>
+          </div>
+          <div style="display:flex;justify-content:center;gap:12px;margin-top:10px;">
+            <button class="medal-btn medal-plus" id="medal-plus" onclick="selectTier('plus')"><span class="medal-icon">➕</span><span class="medal-pts" id="medal-plus-pts">+10</span><span class="medal-label">POSITIVE</span></button>
+            <button class="medal-btn medal-deduct" id="medal-neg" onclick="selectTier('deduct')"><span class="medal-icon">➖</span><span class="medal-pts" id="medal-neg-pts">-5</span><span class="medal-label">NEGATIVE</span></button>
+          </div>
         </div>
-        <div style="display:flex;justify-content:center;gap:12px;margin-top:10px;">
-          <button class="medal-btn medal-plus" id="medal-plus" onclick="selectTier('plus')"><span class="medal-icon">➕</span><span class="medal-pts" id="medal-plus-pts">+10</span><span class="medal-label">POSITIVE</span></button>
-          <button class="medal-btn medal-deduct" id="medal-neg" onclick="selectTier('deduct')"><span class="medal-icon">➖</span><span class="medal-pts" id="medal-neg-pts">-5</span><span class="medal-label">NEGATIVE</span></button>
-        </div>
+        <div class="tier-indicator" id="tier-indicator">🥇 1ST PLACE — +15 POINTS</div>
+        
+        <div id="house-grid" class="house-grid"></div>
       </div>
-      <div class="tier-indicator" id="tier-indicator">🥇 1ST PLACE — +15 POINTS</div>
-      
-      <div id="house-grid" class="house-grid"></div>
+
+      <!-- INDIVIDUAL MODE ONLY: CATEGORY SELECTOR & AUTO POINT DISPLAY -->
+      <div id="individual-mode-sections" style="display: none; margin-bottom: 16px;">
+        <div class="remarks-label" style="font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 6px; text-align: center;">🏷️ SELECT CATEGORY</div>
+        <select id="cat-points-select" onchange="onCategoryPointsChange()" style="margin-bottom: 12px; width:100%;"></select>
+        <div class="tier-indicator" id="individual-points-display" style="background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.3); color: var(--accent); margin-bottom: 16px; text-align:center;">POINTS: +0</div>
+      </div>
       <div class="scan-area" id="cam-area">
         <button id="cam-btn" onclick="toggleCam()">📷</button>
         <div class="scan-hint" id="scan-hint">TAP TO SCAN QR</div>
@@ -417,7 +426,16 @@
           </div>
           <select id="man-house" style="flex:1; margin:0;"><option selected disabled>House</option></select>
         </div>
-        <button class="btn-sub" onclick="submitManual()">✓ SUBMIT MANUALLY</button>
+        
+        <!-- STUDENT HISTORY CARD (NEW) -->
+        <div id="student-history-card" style="display:none; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:15px; margin-bottom:14px; text-align:left;">
+          <div style="font-size:10px; font-weight:900; color:#888; letter-spacing:2px; margin-bottom:10px; text-transform:uppercase;">📊 STUDENT POINTS HISTORY</div>
+          <div id="history-student-details" style="font-size:13px; font-weight:900; color:#fff; margin-bottom:6px;"></div>
+          <div id="history-student-score" style="font-size:24px; font-weight:900; color:var(--neon); margin-bottom:10px;">0 PTS</div>
+          <div id="history-logs-container" style="max-height:150px; overflow-y:auto; font-size:11px; color:#aaa; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px;"></div>
+        </div>
+
+        <button class="btn-sub" id="btn-submit-action" onclick="handleSubmitAction()">✓ SUBMIT POINT</button>
       </div>
 
       <!-- REMARKS -->
@@ -502,7 +520,7 @@
     /* ============================================================
        CONFIG
     ============================================================ */
-    const API = "https://script.google.com/macros/s/AKfycbxwWiJ0MwqG9Y_ZYq-hdHvF11gwO3-n-9UnGEVFcywk6rCj_WfJE46Nm2dMojZMiMibYA/exec";
+    const API = "https://script.google.com/macros/s/AKfycbwahKslQis2MiEcLskgAwNRMyEyB7K4uuT1ZRopSMjgHXYEldCYXAe8hIslAhyWirzOlw/exec";
     
     /* ============================================================
        GLOBAL STATE
@@ -514,6 +532,11 @@
     let pendingPayload = null, undoTimeout = null;
     let currentMode = 'team'; 
     let currentTier = '1st';
+    let currentRole = ''; // 'Admin', 'Department', or 'Common'
+    let scannedStudentDept = null;
+    let categoryPointsList = [];
+    let lastSubmissionTime = 0;
+    let lastSubmissionHash = "";
     let pointSettings = {
       team: { '1st': 20, '2nd': 15, '3rd': 10, 'plus': 10, 'minus': -5 },
       indiv: { '1st': 15, '2nd': 10, '3rd': 5, 'plus': 5, 'minus': -2 }
@@ -585,23 +608,22 @@
       
       api({ action: "getStudentList" }).then(res => {
         if (res && res.success) {
-          const inp = document.getElementById('man-name'), ac = document.getElementById('student-autocomplete'), hs = document.getElementById('man-house');
-          const setHouse = (houseName) => {
-            if (!houseName) return;
-            const h = houseName.trim().toLowerCase();
-            for (let i = 0; i < hs.options.length; i++) {
-              if (hs.options[i].value.trim().toLowerCase() === h) { hs.selectedIndex = i; return; }
-            }
-          };
+          const inp = document.getElementById('man-name'), ac = document.getElementById('student-autocomplete');
 
           inp.addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim(); ac.innerHTML = '';
             // Auto-select if full name matches exactly
             const exactMatch = res.students.find(s => s.name.toLowerCase().trim() === val);
-            if (exactMatch) setHouse(exactMatch.house);
+            if (exactMatch) {
+              setHouse(exactMatch.house);
+              scannedStudentDept = exactMatch.dept;
+              loadStudentHistory(exactMatch.name);
+            } else {
+              document.getElementById('student-history-card').style.display = 'none';
+            }
 
             if (val.length >= 3) {
-              const deptFilter = currentDept === 'Admin' ? null : currentDept;
+              const deptFilter = (currentRole === 'Admin' || currentRole === 'Common') ? null : currentDept;
               const matches = res.students.filter(s => s.name.toLowerCase().includes(val) && (!deptFilter || !s.dept || s.dept.toLowerCase() === deptFilter.toLowerCase()));
               if (matches.length > 0) {
                 ac.style.display = 'block';
@@ -609,11 +631,20 @@
                   const div = document.createElement('div');
                   div.style.padding = '10px 14px'; div.style.cursor = 'pointer'; div.style.borderBottom = '1px solid rgba(255,255,255,0.05)'; div.style.color = '#fff'; div.style.fontSize = '14px';
                   div.innerHTML = `<span style="font-weight:900;">${s.name}</span> <span style="color:#aaa;font-size:10px;margin-left:6px;">(${s.house})</span>`;
-                  div.onclick = () => { inp.value = s.name; setHouse(s.house); ac.style.display = 'none'; };
+                  div.onclick = () => {
+                    inp.value = s.name;
+                    setHouse(s.house);
+                    scannedStudentDept = s.dept;
+                    ac.style.display = 'none';
+                    loadStudentHistory(s.name);
+                  };
                   ac.appendChild(div);
                 });
               } else { ac.style.display = 'none'; }
-            } else { ac.style.display = 'none'; }
+            } else {
+              ac.style.display = 'none';
+              document.getElementById('student-history-card').style.display = 'none';
+            }
           });
           document.addEventListener('click', (e) => { if (e.target !== inp && !ac.contains(e.target)) ac.style.display = 'none'; });
         }
@@ -622,7 +653,7 @@
     }
     
     function updateMedalDisplay() {
-      const pts = pointSettings[currentMode];
+      const pts = pointSettings['team'];
       document.getElementById('medal-1-pts').innerText = '+' + pts['1st'];
       document.getElementById('medal-2-pts').innerText = '+' + pts['2nd'];
       document.getElementById('medal-3-pts').innerText = '+' + pts['3rd'];
@@ -632,24 +663,33 @@
     }
     
     function switchMode(mode) {
-      currentMode = mode;
+      currentMode = mode; // 'team' or 'indiv'
       document.getElementById('tab-team').classList.toggle('active', mode === 'team');
       document.getElementById('tab-indiv').classList.toggle('active', mode === 'indiv');
       
       if (mode === 'team') {
-        document.getElementById('house-grid').style.display = 'grid';
+        document.getElementById('team-mode-sections').style.display = 'block';
+        document.getElementById('individual-mode-sections').style.display = 'none';
         document.getElementById('cam-area').style.display = 'none';
         document.getElementById('manual-area').style.display = 'none';
+        document.getElementById('teacher-meta').style.display = 'flex';
+        document.getElementById('student-history-card').style.display = 'none';
+        if (scanActive) stopCam();
       } else {
-        document.getElementById('house-grid').style.display = 'none';
+        document.getElementById('team-mode-sections').style.display = 'none';
+        document.getElementById('individual-mode-sections').style.display = 'block';
         document.getElementById('cam-area').style.display = 'block';
         document.getElementById('manual-area').style.display = 'block';
+        document.getElementById('teacher-meta').style.display = 'none';
+        document.getElementById('student-history-card').style.display = 'none';
+        document.getElementById('man-name').value = '';
+        document.getElementById('man-house').selectedIndex = 0;
+        document.getElementById('btn-submit-action').innerText = '✓ SUBMIT POINT';
       }
-      updateMedalDisplay();
     }
     
     function selectTier(tier) {
-      currentTier = tier; const pts = pointSettings[currentMode][tier], isNeg = pts < 0;
+      currentTier = tier; const pts = pointSettings['team'][tier], isNeg = pts < 0;
       ['medal-1', 'medal-2', 'medal-3', 'medal-plus', 'medal-neg'].forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('selected', 'medal-stamp'); });
       const targetId = { '1st': 'medal-1', '2nd': 'medal-2', '3rd': 'medal-3', 'plus': 'medal-plus', 'deduct': 'medal-neg' }[tier];
       const targetEl = document.getElementById(targetId);
@@ -669,8 +709,16 @@
     
     function render(data) {
       if (!data) return;
-      const { images, houseConfig, deptList, categories, appLinks } = data;
+      const { images, houseConfig, deptList, categories, appLinks, categoryPoints } = data;
       adminCats = categories || []; globalDeptList = deptList || []; globalAppLinks = appLinks || [];
+      if (categoryPoints) {
+        categoryPointsList = categoryPoints;
+        const sel = document.getElementById('cat-points-select');
+        if (sel) {
+          sel.innerHTML = categoryPointsList.map(c => `<option value="${c.category}">${c.category} (${c.points > 0 ? '+' : ''}${c.points} pts)</option>`).join('');
+          onCategoryPointsChange();
+        }
+      }
       if (images && images.bg) document.getElementById('main-bg').style.backgroundImage = `url('${images.bg}')`;
       if (images && images.logo) document.getElementById('m-logo').src = images.logo;
       if (images && images.founder) document.getElementById('m-founder').src = images.founder;
@@ -706,11 +754,11 @@
         const res = await api({ action: "authenticate", user: selectedDept, pass: p });
         if (res.success) {
           closeLogin(); localStorage.setItem('goats_user', selectedDept); localStorage.setItem('goats_pass', p);
+          currentRole = res.role;
           isAdmin = (res.role === 'Admin'); currentDept = selectedDept; document.getElementById('dept-label').innerText = selectedDept;
           document.getElementById('dept-gate').style.display = isAdmin ? 'block' : 'none'; document.getElementById('teacher-view').style.display = 'block'; document.getElementById('admin-actions').style.display = isAdmin ? 'flex' : 'none';
           if (!isAdmin) {
             document.getElementById('activity-tabs').style.display = 'flex';
-            document.getElementById('medal-section').style.display = 'block'; document.getElementById('tier-indicator').style.display = 'block'; 
             switchMode('team');
             document.getElementById('remarks-area').style.display = 'block';
             document.getElementById('teacher-meta').style.display = 'flex'; document.getElementById('staff-area').style.display = 'block'; document.querySelector('.scoreboard').style.display = 'block'; document.getElementById('dept-label').style.display = 'block';
@@ -753,50 +801,156 @@
       const tSel = document.getElementById('t-name'); const teacherName = tSel.value;
       if (!teacherName) { showToast("⚠️ Select your name first!"); if (scanActive) stopCam(); return; }
       const actualH = Object.keys(scores).find(k => k.toLowerCase() === hInput.trim().toLowerCase()); if (!actualH) return;
-      const pts = pointSettings[currentMode][currentTier]; const remarks = document.getElementById('remarks-input').value.trim();
+      
+      let pts, cat, tier;
+      if (currentMode === 'indiv') {
+        cat = document.getElementById('cat-points-select').value;
+        const match = categoryPointsList.find(c => c.category === cat);
+        pts = match ? match.points : 0;
+        tier = 'plus';
+      } else {
+        cat = document.getElementById('p-cat').value;
+        pts = pointSettings[currentMode][currentTier];
+        tier = currentTier;
+      }
+      
+      const remarks = document.getElementById('remarks-input').value.trim();
+
+      // Duplicate Point Safeguard
+      const submissionHash = `${sName || ''}_${actualH}_${cat}_${pts}_${remarks}`;
+      const nowTime = Date.now();
+      if (submissionHash === lastSubmissionHash && (nowTime - lastSubmissionTime) < 4000) {
+        showToast("⚠️ Duplicate point blocked!");
+        if (scanActive) stopCam();
+        return;
+      }
+      lastSubmissionHash = submissionHash;
+      lastSubmissionTime = nowTime;
+
       scores[actualH] += pts; document.getElementById('s-' + actualH).innerText = scores[actualH]; updateRanks();
       if (navigator.vibrate) { try { navigator.vibrate(pts > 0 ? [60, 60, 60] : [250]); } catch (e) {} }
-      if (pts > 0) { confetti({ particleCount: currentTier === '1st' ? 120 : currentTier === '2nd' ? 80 : 40, spread: 70, origin: { y: 0.6 } }); playBeep('success'); } else { playBeep('fail'); }
+      if (pts > 0) { confetti({ particleCount: tier === '1st' ? 120 : tier === '2nd' ? 80 : 40, spread: 70, origin: { y: 0.6 } }); playBeep('success'); } else { playBeep('fail'); }
       document.body.classList.remove('shake'); void document.body.offsetWidth; document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 500);
       const pop = document.getElementById('paper-popup');
       document.getElementById('pop-status').innerText = pts > 0 ? "🎉 POINT AWARDED 🎉" : "⚠️ POINT DEDUCTED ⚠️";
       document.getElementById('pop-status').style.color = pts > 0 ? "var(--neon)" : "var(--red)";
-      document.getElementById('pop-medal').innerText = tierMedals[currentTier]; document.getElementById('pop-name').innerText = sName || "STUDENT";
-      document.getElementById('pop-dept').innerText = currentDept.toUpperCase(); document.getElementById('pop-pts').innerText = (pts > 0 ? '+' : '') + pts;
+      document.getElementById('pop-medal').innerText = currentMode === 'indiv' ? '🏷️' : tierMedals[tier];
+      document.getElementById('pop-name').innerText = sName || "STUDENT";
+      document.getElementById('pop-dept').innerText = currentDept.toUpperCase();
+      document.getElementById('pop-pts').innerText = (pts > 0 ? '+' : '') + pts;
       document.getElementById('pop-pts').style.color = pts > 0 ? "var(--neon)" : "var(--red)";
       document.getElementById('pop-house').innerText = actualH; document.getElementById('pop-house').style.background = houseColors[actualH] || "#fff";
       document.getElementById('pop-remarks').innerText = remarks ? `"${remarks}"` : '';
-      pop.classList.remove('show'); void pop.offsetWidth; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 3500);
-      const payload = { dept: currentDept, studentDept: sDept, studentName: sName, teacherName: teacherName, category: document.getElementById('p-cat').value, house: actualH, type: pts > 0 ? 'Positive' : 'Negative', points: pts, tier: currentTier, remarks: remarks };
+      pop.classList.remove('show'); void pop.offsetWidth; pop.classList.add('show'); setTimeout(() => pop.classList.remove('show'), 5000);
+      
+      const payload = {
+        mode: currentMode === 'indiv' ? 'individual' : 'team',
+        dept: currentDept,
+        studentDept: sDept || scannedStudentDept,
+        studentName: sName,
+        teacherName: teacherName,
+        category: cat,
+        house: actualH,
+        type: pts > 0 ? 'Positive' : 'Negative',
+        points: pts,
+        tier: tier,
+        remarks: remarks
+      };
+      
       document.getElementById('remarks-input').value = '';
+      document.getElementById('student-history-card').style.display = 'none';
       if (pendingPayload) { if (undoTimeout) clearTimeout(undoTimeout); executePendingPoint(); }
-      pendingPayload = payload; const sb = document.getElementById('undo-snackbar'); sb.style.display = 'flex'; undoTimeout = setTimeout(() => { executePendingPoint(); }, 10000);
+      pendingPayload = payload; const sb = document.getElementById('undo-snackbar'); sb.style.display = 'flex'; undoTimeout = setTimeout(() => { executePendingPoint(); }, 5000);
     }
     
     async function executePendingPoint() {
       if (!pendingPayload) return; const p = pendingPayload; pendingPayload = null; document.getElementById('undo-snackbar').style.display = 'none';
-      try { if (!navigator.onLine) throw new Error("Offline"); const res = await api({ action: "submitPoint", data: p }); if (!res || !res.success) throw new Error(); }
-      catch (e) { const q = JSON.parse(localStorage.getItem('goats_queue') || '[]'); q.push(p); localStorage.setItem('goats_queue', JSON.stringify(q)); }
+      try {
+        if (!navigator.onLine) throw new Error("Offline");
+        const res = await api({ action: "submitPoint", data: p });
+        if (!res || !res.success) throw new Error();
+        const activeName = document.getElementById('man-name').value.trim();
+        if (activeName && activeName.toLowerCase() === p.studentName.toLowerCase()) {
+          loadStudentHistory(p.studentName);
+        }
+      }
+      catch (e) {
+        const q = JSON.parse(localStorage.getItem('goats_queue') || '[]');
+        q.push(p);
+        localStorage.setItem('goats_queue', JSON.stringify(q));
+      }
     }
     
     function undoPoint() {
       if (undoTimeout) { clearTimeout(undoTimeout); undoTimeout = null; }
-      if (pendingPayload) { const h = pendingPayload.house; scores[h] -= pendingPayload.points; document.getElementById('s-' + h).innerText = scores[h]; updateRanks(); showToast("↩️ Point assignment canceled!"); }
-      pendingPayload = null; document.getElementById('undo-snackbar').style.display = 'none';
+      if (pendingPayload) {
+        const h = pendingPayload.house;
+        scores[h] -= pendingPayload.points;
+        document.getElementById('s-' + h).innerText = scores[h];
+        updateRanks();
+        showToast("↩️ Point assignment canceled!");
+        document.getElementById('paper-popup').classList.remove('show');
+        const activeName = document.getElementById('man-name').value.trim();
+        if (activeName && activeName.toLowerCase() === pendingPayload.studentName.toLowerCase()) {
+          loadStudentHistory(pendingPayload.studentName);
+        }
+      }
+      pendingPayload = null;
+      document.getElementById('undo-snackbar').style.display = 'none';
     }
     
     async function toggleCam() {
       if (!scanActive) {
         document.getElementById('reader').style.display = 'block'; document.getElementById('cam-btn').innerText = '⏹'; document.getElementById('scan-hint').innerText = 'SCANNING...';
         html5QrCode = new Html5Qrcode("reader");
-        await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 240 }, (t) => { const p = t.split('|').map(x => x.trim()); if (p.length >= 3) { record(p[2], p[0], p[1]); stopCam(); } });
+        await html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 240 }, (t) => {
+          const p = t.split('|').map(x => x.trim());
+          if (p.length >= 3) {
+            record(p[2], p[0], p[1]);
+            stopCam();
+          }
+        });
         scanActive = true;
       } else { stopCam(); }
     }
     async function stopCam() { if (html5QrCode) await html5QrCode.stop(); document.getElementById('reader').style.display = 'none'; document.getElementById('cam-btn').innerText = '📷'; document.getElementById('scan-hint').innerText = 'TAP TO SCAN QR'; scanActive = false; }
-    function submitManual() { const n = document.getElementById('man-name').value, h = document.getElementById('man-house').value; if (!n || !h) { showToast("⚠️ Fill name & house"); return; } record(h, n); document.getElementById('man-name').value = ""; }
+    
+    function submitManual() {
+      const n = document.getElementById('man-name').value, h = document.getElementById('man-house').value;
+      if (!n || !h) { showToast("⚠️ Fill name & house"); return; }
+      record(h, n, scannedStudentDept);
+      document.getElementById('man-name').value = "";
+      scannedStudentDept = null;
+    }
+    
+    function handleSubmitAction() {
+      if (currentMode === 'team') {
+        submitManual();
+      } else {
+        const n = document.getElementById('man-name').value.trim();
+        const h = document.getElementById('man-house').value;
+        if (!n || !h) { showToast("⚠️ Fill name & house"); return; }
+        record(h, n, scannedStudentDept);
+        document.getElementById('man-name').value = "";
+        scannedStudentDept = null;
+      }
+    }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3200); }
-    function logout() { localStorage.removeItem('goats_user'); localStorage.removeItem('goats_pass'); document.getElementById('teacher-view').style.display = 'none'; document.getElementById('dept-gate').style.display = 'block'; document.querySelector('.gate-title').innerText = "SELECT DEPARTMENT"; const allCard = document.getElementById('card-all'); if (allCard) allCard.remove(); isAdmin = false; currentDept = ""; if (scanActive) stopCam(); if (localStorage.getItem('goats_cache')) render(JSON.parse(localStorage.getItem('goats_cache'))); }
+    function logout() {
+      localStorage.removeItem('goats_user');
+      localStorage.removeItem('goats_pass');
+      document.getElementById('teacher-view').style.display = 'none';
+      document.getElementById('dept-gate').style.display = 'block';
+      document.querySelector('.gate-title').innerText = "SELECT DEPARTMENT";
+      const allCard = document.getElementById('card-all');
+      if (allCard) allCard.remove();
+      isAdmin = false;
+      currentDept = "";
+      currentRole = "";
+      document.getElementById('student-history-card').style.display = 'none';
+      if (scanActive) stopCam();
+      if (localStorage.getItem('goats_cache')) render(JSON.parse(localStorage.getItem('goats_cache')));
+    }
     function toggleBranding() { const b = document.getElementById('admin-branding'); b.style.display = (b.style.display === 'block') ? 'none' : 'block'; document.getElementById('admin-webapp-form').style.display = 'none'; }
     function toggleWebAppForm() { const b = document.getElementById('admin-webapp-form'); b.style.display = (b.style.display === 'block') ? 'none' : 'block'; document.getElementById('admin-branding').style.display = 'none'; }
     async function forceSync() { showToast("🔄 Syncing..."); await processQueue(); localStorage.removeItem('goats_cache'); await boot(); }
@@ -1313,6 +1467,75 @@
       const cache = JSON.parse(localStorage.getItem('goats_cache') || '{}'); const logoUrl = cache.images?.logo || '';
       const html = `<!DOCTYPE html><html><head><title>Statement - ${name}</title><style>body{font-family:sans-serif;padding:40px;color:#111;}.page{width:210mm;margin:0 auto;}.header{text-align:center;border-bottom:3px double #333;padding-bottom:20px;margin-bottom:30px;}.college-name{font-size:24px;font-weight:900;text-transform:uppercase;}.college-sub{font-size:12px;color:#666;letter-spacing:2px;margin-top:4px;}.report-title{font-size:18px;font-weight:900;border:2px solid #111;display:inline-block;padding:8px 25px;margin-top:20px;border-radius:10px;}.student-box{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;border-bottom:1px solid #ddd;padding-bottom:20px;}.name-big{font-size:32px;font-weight:900;text-transform:uppercase;}.score-big{font-size:60px;font-weight:900;color:#111;line-height:1;}.section-title{font-size:14px;font-weight:900;background:#f0f0f0;padding:10px;margin:30px 0 15px;border-left:5px solid #000;}table{width:100%;border-collapse:collapse;}th{text-align:left;background:#111;color:#fff;padding:10px;font-size:12px;}td{padding:12px 10px;border-bottom:1px solid #eee;font-size:13px;}.pts-cell{font-weight:900;text-align:right;}@media print{.no-print{display:none;}@page{size:A4;margin:15mm;}}.print-btn{position:fixed;top:20px;right:20px;padding:15px 30px;background:#000;color:#fff;border:none;border-radius:30px;font-weight:900;cursor:pointer;}</style></head><body><button class="print-btn no-print" onclick="window.print()">🖨️ PRINT STATEMENT</button><div class="page"><div class="header">${logoUrl?`<img src="${logoUrl}" style="height:80px;margin-bottom:10px;">`:''}<div class="college-name">DON BOSCO POLYTECHNIC COLLEGE</div><div class="college-sub">Givers Of All Talents Students — Championship Portal</div><div class="report-title">STUDENT PERFORMANCE STATEMENT</div></div><div class="student-box"><div><div style="font-size:12px;color:#666;letter-spacing:2px;font-weight:900;">STUDENT PROFILE</div><div class="name-big">${studentProfile.name}</div><div style="font-size:14px;font-weight:700;margin-top:5px;">DEPT: ${studentProfile.dept} | HOUSE: ${studentProfile.house}</div></div><div style="text-align:right;"><div style="font-size:12px;color:#666;letter-spacing:2px;font-weight:900;">TOTAL POINTS</div><div class="score-big">${totalPoints}</div></div></div><div class="section-title">📊 CATEGORY BREAKDOWN</div><table><tr><th>CATEGORY</th><th>POINTS</th></tr>${Object.entries(categoryBreakdown).map(([cat,pts])=>`<tr><td>${cat}</td><td class="pts-cell">${pts} PTS</td></tr>`).join('')}</table><div class="section-title">📜 COMPLETE ACTIVITY LOG</div><table><tr><th>DATE</th><th>CATEGORY</th><th>TEACHER</th><th>REMARKS</th><th>POINTS</th></tr>${logs.map(l=>`<tr><td>${new Date(l.date).toLocaleDateString()}</td><td><b>${l.cat}</b></td><td>${l.teacher}</td><td style="font-size:11px;color:#666;font-style:italic;">${l.remarks||'—'}</td><td class="pts-cell" style="color:${l.pts>0?'#111':'#ff416c'}">${l.pts>0?'+':''}${l.pts}</td></tr>`).join('')}</table><div style="margin-top:80px;display:flex;justify-content:space-between;padding:0 20px;"><div style="text-align:center;"><div style="width:200px;border-top:1px solid #111;margin-bottom:5px;"></div><div style="font-weight:900;font-size:12px;">HEAD OF DEPARTMENT</div><div style="font-size:10px;color:#666;">${studentProfile.dept}</div></div><div style="text-align:center;"><div style="width:200px;border-top:1px solid #111;margin-bottom:5px;"></div><div style="font-weight:900;font-size:12px;">PRINCIPAL</div><div style="font-size:10px;color:#666;">Don Bosco Polytechnic College</div></div></div></div></body></html>`;
       pw.document.open(); pw.document.write(html); pw.document.close();
+    }
+
+    function onCategoryPointsChange() {
+      const sel = document.getElementById('cat-points-select');
+      if (!sel) return;
+      const val = sel.value;
+      const match = categoryPointsList.find(c => c.category === val);
+      const pts = match ? match.points : 0;
+      const display = document.getElementById('individual-points-display');
+      if (display) display.innerText = `POINTS: ${pts > 0 ? '+' : ''}${pts}`;
+    }
+
+    async function loadStudentHistory(studentName) {
+      const tSel = document.getElementById('t-name');
+      if (!tSel.value) {
+        showToast("⚠️ Select your name first!");
+        document.getElementById('man-name').value = "";
+        document.getElementById('man-house').selectedIndex = 0;
+        document.getElementById('student-history-card').style.display = 'none';
+        if (scanActive) stopCam();
+        return;
+      }
+      const card = document.getElementById('student-history-card');
+      const details = document.getElementById('history-student-details');
+      const score = document.getElementById('history-student-score');
+      const logsCont = document.getElementById('history-logs-container');
+      
+      details.innerText = `Loading history for ${studentName}...`;
+      score.innerText = "...";
+      logsCont.innerHTML = "";
+      card.style.display = 'block';
+      
+      try {
+        const res = await api({ action: "getStudentStatement", studentName: studentName });
+        if (res.success) {
+          details.innerText = `${res.studentProfile.name} (${res.studentProfile.dept} - ${res.studentProfile.house})`;
+          score.innerText = `${res.totalPoints} PTS`;
+          if (res.logs && res.logs.length) {
+            logsCont.innerHTML = res.logs.map(l => `
+              <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <span style="font-weight:900; color:#fff;">${l.cat}</span>
+                  <span style="color:#666; margin-left:5px;">${new Date(l.date).toLocaleDateString()}</span>
+                  ${l.remarks ? `<br><span style="color:#888; font-style:italic;">"${l.remarks}"</span>` : ''}
+                </div>
+                <div style="font-weight:900; color:${l.pts > 0 ? 'var(--neon)' : 'var(--red)'};">
+                  ${l.pts > 0 ? '+' : ''}${l.pts}
+                </div>
+              </div>
+            `).join('');
+          } else {
+            logsCont.innerHTML = '<div style="color:#555; font-style:italic;">No points log found.</div>';
+          }
+        } else {
+          card.style.display = 'none';
+        }
+      } catch (e) {
+        card.style.display = 'none';
+      }
+    }
+
+    function setHouse(houseName) {
+      if (!houseName) return;
+      const hs = document.getElementById('man-house');
+      if (!hs) return;
+      const h = houseName.trim().toLowerCase();
+      for (let i = 0; i < hs.options.length; i++) {
+        if (hs.options[i].value.trim().toLowerCase() === h) { hs.selectedIndex = i; return; }
+      }
     }
   </script>
 </body>
